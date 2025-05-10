@@ -21,28 +21,15 @@ fn my_readlink_hook(
     buf: *mut c_char,
     bufsiz: size_t
 ) -> ssize_t {
-    // Print a message before calling the original function
-    // Using eprintln to ensure it's visible, especially if stdout is redirected.
-    eprintln!("[readlinkspy] Hooked call to readlink!");
-    
-    // Optionally, you could inspect the arguments here, e.g., convert pathname to a Rust string
-    // Be careful with safety and error handling if you do.
-    // For example (requires checking for null pointers and valid UTF-8):
-    /*
-    if !pathname.is_null() {
-        let path_str = unsafe { std::ffi::CStr::from_ptr(pathname).to_string_lossy() };
-        eprintln!("[readlinkspy] Pathname: {}", path_str);
+    eprintln!("[hooktrace] readlink called for path: {:?}, bufsiz: {}", unsafe { std::ffi::CStr::from_ptr(pathname) }, bufsiz);
+    // 暂时不调用 _original_readlink_ptr
+    // 返回一个错误码或者一个模拟的成功值
+    if bufsiz > 0 && !buf.is_null() {
+         unsafe { *buf = 0; } // 写入一个空终止符
     }
-    eprintln!("[readlinkspy] Buffer size: {}", bufsiz);
-    */
-
-    // Call the original readlink function
-    let result = unsafe { original_readlink(pathname, buf, bufsiz) };
-
-    // Optionally, inspect the result
-    // eprintln!("[readlinkspy] readlink returned: {}", result);
-
-    result
+    return -1; // 或者 0 如果模拟成功
+    // let result = unsafe { original_readlink(pathname, buf, bufsiz) };
+    // result
 }
 
 // To make this example runnable, you would typically compile this into a .so/.dylib file.
