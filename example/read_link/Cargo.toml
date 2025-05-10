@@ -1,0 +1,15 @@
+[package]
+name = "read_link"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "readlinkspy"
+crate-type = ["dylib"] # Fix deprecated 'crate_type'
+
+# Assuming hooktracer-macro is the intended direct dependency for the macro
+[dependencies.hooktracer-macro]
+path = "../../hooktracer-macro" 
+
+[dependencies]
+libc = "0.2"
