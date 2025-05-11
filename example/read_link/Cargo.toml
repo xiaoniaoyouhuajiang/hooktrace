@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "readlinkspy"
-crate-type = ["dylib"] # Fix deprecated 'crate_type'
+crate-type = ["cdylib"] # Fix deprecated 'crate_type'
 
 # Assuming hooktracer-macro is the intended direct dependency for the macro
 [dependencies.hooktracer-macro]

@@ -21,15 +21,15 @@ fn my_readlink_hook(
     buf: *mut c_char,
     bufsiz: size_t
 ) -> ssize_t {
-    eprintln!("[hooktrace] readlink called for path: {:?}, bufsiz: {}", unsafe { std::ffi::CStr::from_ptr(pathname) }, bufsiz);
-    // 暂时不调用 _original_readlink_ptr
-    // 返回一个错误码或者一个模拟的成功值
-    if bufsiz > 0 && !buf.is_null() {
-         unsafe { *buf = 0; } // 写入一个空终止符
-    }
-    return -1; // 或者 0 如果模拟成功
-    // let result = unsafe { original_readlink(pathname, buf, bufsiz) };
-    // result
+    eprintln!("[hooktrace] PRE-HOOK: readlink called for path: {:?}, bufsiz: {}", unsafe { std::ffi::CStr::from_ptr(pathname) }, bufsiz);
+
+    // 调用原始的 readlink 函数
+    let result = unsafe { original_readlink(pathname, buf, bufsiz) };
+
+    eprintln!("[hooktrace] POST-HOOK: original_readlink returned: {}, buf (if successful): {:?}", result, if result != -1 && !buf.is_null() { unsafe { std::ffi::CStr::from_ptr(buf).to_str().ok() } } else { None });
+
+    // 返回原始函数的结果
+    result
 }
 
 // To make this example runnable, you would typically compile this into a .so/.dylib file.
