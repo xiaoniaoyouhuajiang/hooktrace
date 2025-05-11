@@ -31,7 +31,7 @@ fn parse_hook_attributes(args: &[NestedMeta]) -> Result<(String, Option<String>)
 
     match symbol {
         Some(s) => Ok((s, library)),
-        none => Err(Error::new(
+        None => Err(Error::new(
             Span::call_site(),
             "Missing required attribute 'symbol = \"...\"'",
         )),
@@ -115,7 +115,7 @@ pub fn hook_trace(args: TokenStream, item: TokenStream) -> TokenStream {
 
     let symbol_name_cstr = format!("{}\0", symbol_name);
     let library_handle = match library_name {
-        none | Some(_) => quote! { libc::RTLD_NEXT },
+        None | Some(_) => quote! { libc::RTLD_NEXT },
     };
 
     let expanded = quote! {
