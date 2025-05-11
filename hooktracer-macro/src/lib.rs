@@ -31,7 +31,7 @@ fn parse_hook_attributes(args: &[NestedMeta]) -> Result<(String, Option<String>)
 
     match symbol {
         Some(s) => Ok((s, library)),
-        None => Err(Error::new(
+        none => Err(Error::new(
             Span::call_site(),
             "Missing required attribute 'symbol = \"...\"'",
         )),
@@ -115,7 +115,7 @@ pub fn hook_trace(args: TokenStream, item: TokenStream) -> TokenStream {
 
     let symbol_name_cstr = format!("{}\0", symbol_name);
     let library_handle = match library_name {
-        None | Some(_) => quote! { libc::RTLD_NEXT },
+        none | Some(_) => quote! { libc::RTLD_NEXT },
     };
 
     let expanded = quote! {
@@ -134,20 +134,8 @@ pub fn hook_trace(args: TokenStream, item: TokenStream) -> TokenStream {
                 let symbol_name_ptr = symbol_name_bytes.as_ptr() as *const libc::c_char;
                 let current_library_handle = #library_handle; // Evaluate the handle
 
-                eprintln!(
-                    "[hooktracer-macro] Attempting dlsym for symbol: '{}' with handle: {:p}",
-                    #symbol_name,
-                    current_library_handle as *mut libc::c_void // Cast to pointer for printing
-                );
-
                 // 使用 dlsym 查找原始函数地址
                 let addr = libc::dlsym(current_library_handle, symbol_name_ptr);
-
-                eprintln!(
-                    "[hooktracer-macro] dlsym for '{}' returned address: {:p}",
-                    #symbol_name,
-                    addr
-                );
 
                 if addr.is_null() {
                     // dlsym 失败的处理 - 打印错误到 stderr 并中止进程
@@ -156,28 +144,10 @@ pub fn hook_trace(args: TokenStream, item: TokenStream) -> TokenStream {
                         #symbol_name,
                         current_library_handle as *mut libc::c_void
                     );
-                    // Consider attempting to print dlerror() if this doesn't help enough.
-                    // For example:
-                    // let error_msg = libc::dlerror();
-                    // if !error_msg.is_null() {
-                    //    let c_str = std::ffi::CStr::from_ptr(error_msg);
-                    //    eprintln!("[hooktracer-macro] dlerror: {}", c_str.to_string_lossy());
-                    // }
                     std::process::abort();
                 }
-
-                eprintln!("[hooktracer-macro] dlsym for '{}' succeeded. Address: {:p}", #symbol_name, addr);
-                // 将地址转换为正确的函数指针类型
-                // 这是 unsafe 的核心！必须确保类型签名匹配
                 std::mem::transmute::<*mut libc::c_void, #original_fn_ptr_type>(addr)
             });
-
-            eprintln!(
-                "[hooktracer-macro] Calling user logic function '{}' for symbol '{}'. Original fn ptr: {:p}",
-                stringify!(#user_logic_fn_ident),
-                #symbol_name,
-                *original_fn as *const () // Cast to a generic pointer for printing
-            );
 
             #user_logic_fn_ident(*original_fn, #(#wrapper_fn_arg_idents),*)
         }
